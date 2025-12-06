@@ -1,0 +1,79 @@
+[
+    {
+        "id": "f7ee29e1334162d9",
+        "type": "tab",
+        "label": "Flow 1",
+        "disabled": false,
+        "info": "",
+        "env": []
+    },
+    {
+        "id": "1960b16e3752f3b0",
+        "type": "mqtt-broker",
+        "name": "mosquitto",
+        "broker": "172.30.0.100",
+        "port": 1883,
+        "clientid": "",
+        "autoConnect": true,
+        "usetls": false,
+        "protocolVersion": 4,
+        "keepalive": 60,
+        "cleansession": true,
+        "autoUnsubscribe": true,
+        "birthTopic": "",
+        "birthQos": "0",
+        "birthRetain": "false",
+        "birthPayload": "",
+        "birthMsg": {},
+        "closeTopic": "",
+        "closeQos": "0",
+        "closeRetain": "false",
+        "closePayload": "",
+        "closeMsg": {},
+        "willTopic": "",
+        "willQos": "0",
+        "willRetain": "false",
+        "willPayload": "",
+        "willMsg": {},
+        "userProps": "",
+        "sessionExpiry": ""
+    },
+    {
+        "id": "4cdd5274432f5d5c",
+        "type": "mqtt in",
+        "z": "f7ee29e1334162d9",
+        "name": "",
+        "topic": "/home/+/humidity/+",
+        "qos": "2",
+        "datatype": "auto-detect",
+        "broker": "1960b16e3752f3b0",
+        "nl": false,
+        "rap": true,
+        "rh": 0,
+        "inputs": 0,
+        "x": 250,
+        "y": 140,
+        "wires": [
+            [
+                "985d11d73125021a"
+            ]
+        ]
+    },
+    {
+        "id": "985d11d73125021a",
+        "type": "debug",
+        "z": "f7ee29e1334162d9",
+        "name": "debug 1",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "topic",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 540,
+        "y": 100,
+        "wires": []
+    }
+]
