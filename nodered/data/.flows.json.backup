@@ -8,59 +8,135 @@
         "env": []
     },
     {
-        "id": "1960b16e3752f3b0",
-        "type": "mqtt-broker",
-        "name": "mosquitto",
-        "broker": "172.30.0.100",
-        "port": 1883,
-        "clientid": "",
-        "autoConnect": true,
+        "id": "ce479483708d6c92",
+        "type": "influxdb",
+        "hostname": "127.0.0.1",
+        "port": 8086,
+        "protocol": "http",
+        "database": "database",
+        "name": "influxdb",
         "usetls": false,
-        "protocolVersion": 4,
-        "keepalive": 60,
-        "cleansession": true,
-        "autoUnsubscribe": true,
-        "birthTopic": "",
-        "birthQos": "0",
-        "birthRetain": "false",
-        "birthPayload": "",
-        "birthMsg": {},
-        "closeTopic": "",
-        "closeQos": "0",
-        "closeRetain": "false",
-        "closePayload": "",
-        "closeMsg": {},
-        "willTopic": "",
-        "willQos": "0",
-        "willRetain": "false",
-        "willPayload": "",
-        "willMsg": {},
-        "userProps": "",
-        "sessionExpiry": ""
+        "tls": "",
+        "influxdbVersion": "2.0",
+        "url": "http://172.30.0.101:8086",
+        "timeout": 10,
+        "rejectUnauthorized": true
     },
     {
-        "id": "4cdd5274432f5d5c",
-        "type": "mqtt in",
+        "id": "27ace9ab301b3114",
+        "type": "influxdb in",
         "z": "f7ee29e1334162d9",
-        "name": "",
-        "topic": "/home/+/humidity/+",
-        "qos": "2",
-        "datatype": "auto-detect",
-        "broker": "1960b16e3752f3b0",
-        "nl": false,
-        "rap": true,
-        "rh": 0,
-        "inputs": 0,
-        "x": 250,
-        "y": 140,
+        "influxdb": "ce479483708d6c92",
+        "name": "Read temperature",
+        "query": "from(bucket: \"smarthouse\")\n  |> range(start: -30m)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"temperature\")\n",
+        "rawOutput": false,
+        "precision": "",
+        "retentionPolicy": "",
+        "org": "univaq",
+        "x": 390,
+        "y": 260,
         "wires": [
             [
-                "985d11d73125021a"
+                "24d33817bc5bc3a0"
             ]
         ]
     },
     {
-        "id": "985d11d73125021a",
+        "id": "5f8f04323e64879b",
+        "type": "inject",
+        "z": "f7ee29e1334162d9",
+        "name": "",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "",
+        "payloadType": "date",
+        "x": 160,
+        "y": 260,
+        "wires": [
+            [
+                "27ace9ab301b3114"
+            ]
+        ]
+    },
+    {
+        "id": "24d33817bc5bc3a0",
+        "type": "debug",
+        "z": "f7ee29e1334162d9",
+        "name": "debug 2",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 600,
+        "y": 260,
+        "wires": []
+    },
+    {
+        "id": "c9dcb590a421687d",
+        "type": "inject",
+        "z": "f7ee29e1334162d9",
+        "name": "",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "",
+        "payloadType": "date",
+        "x": 160,
+        "y": 340,
+        "wires": [
+            [
+                "a515d77e6052162b"
+            ]
+        ]
+    },
+    {
+        "id": "a515d77e6052162b",
+        "type": "influxdb in",
+        "z": "f7ee29e1334162d9",
+        "influxdb": "ce479483708d6c92",
+        "name": "Read humidity",
+        "query": "from(bucket: \"smarthouse\")\n  |> range(start: -30m)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"humidity\")\n",
+        "rawOutput": false,
+        "precision": "",
+        "retentionPolicy": "",
+        "org": "univaq",
+        "x": 360,
+        "y": 340,
+        "wires": [
+            [
+                "8b5c8ad637967d72"
+            ]
+        ]
+    },
+    {
+        "id": "8b5c8ad637967d72",
         "type": "debug",
         "z": "f7ee29e1334162d9",
         "name": "debug 1",
@@ -71,8 +147,8 @@
         "complete": "false",
         "statusVal": "",
         "statusType": "auto",
-        "x": 540,
-        "y": 100,
+        "x": 560,
+        "y": 360,
         "wires": []
     }
 ]
