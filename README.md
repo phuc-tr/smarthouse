@@ -1,3 +1,1 @@
-docker-compose up
-
-Go to localhost:8086, 
+Just run `docker-compose up`

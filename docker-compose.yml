@@ -1,14 +1,14 @@
 services:
-  # nodered:
-  #   container_name: nodered
-  #   build: ./nodered
-  #   ports:
-  #     - "1880:1880"
-  #   volumes:
-  #     - ./nodered/data:/data
-  #   networks:
-  #     iot-network:
-  #       ipv4_address: 172.30.0.99
+  nodered:
+    container_name: nodered
+    build: ./nodered
+    ports:
+      - "1880:1880"
+    volumes:
+      - ./nodered/data:/data
+    networks:
+      iot-network:
+        ipv4_address: 172.30.0.99
 
   mosquitto:
     container_name: mosquitto
