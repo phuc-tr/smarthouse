@@ -59,6 +59,26 @@ services:
       iot-network:
         ipv4_address: 172.30.0.102
 
+  grafana:
+    container_name: grafana
+    image: grafana/grafana:latest
+    restart: always
+    depends_on:
+      - influxdb
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_INSTALL_PLUGINS=
+    links:
+      - influxdb
+    ports:
+      - '3000:3000'
+    volumes:
+      - ./grafana:/var/lib/grafana
+    networks:
+      iot-network:
+        ipv4_address: 172.30.0.103
+
 networks:
   iot-network:
     driver: bridge
