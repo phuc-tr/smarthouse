@@ -1,101 +1,102 @@
 import time
 import random
-from datetime import datetime
-from typing import Tuple
-import paho.mqtt.client as mqtt
 import os
+from datetime import datetime
+from typing import Dict, Tuple
+import yaml
+import paho.mqtt.client as mqtt
 
 # ==========================
-# CONFIG
+# ENV / CONFIG
 # ==========================
 
 MQTT_BROKER_HOST = os.getenv("MQTT_BROKER_HOST", "localhost")
 MQTT_BROKER_PORT = int(os.getenv("MQTT_BROKER_PORT", "1883"))
 MQTT_CLIENT_ID = "smarthome-simulator"
+CONFIG_PATH = os.getenv("SIM_CONFIG", "config.yaml")
 
-SIMULATION_INTERVAL_SECONDS = 60
+# ==========================
+# LOAD YAML CONFIG
+# ==========================
 
-ROOMS = {
-    "room1": {"room": "kitchen", "profile": "kitchen"},
-    "room2": {"room": "livingroom", "profile": "livingroom"},
-    "room3": {"room": "bedroom", "profile": "bedroom"},
-}
+with open(CONFIG_PATH, "r") as f:
+    CONFIG = yaml.safe_load(f)
 
-SENSOR_ID = "1"
+SIMULATION_INTERVAL_SECONDS = CONFIG["simulation"]["interval_seconds"]
+ROOMS = CONFIG["rooms"]
 
-WINDOW_STATE = {
-    room_id: {"open": False, "minutes_left": 0}
-    for room_id in ROOMS.keys()
-}
+# Window state per (room_id, sensor_id)
+WINDOW_STATE: Dict[Tuple[str, int], Dict] = {}
 
 # ==========================
 # UTILS
 # ==========================
 
-def get_local_time() -> datetime:
+def now():
     return datetime.now()
 
-def clamp(value: float, min_val: float, max_val: float) -> float:
-    return max(min_val, min(max_val, value))
+def clamp(v, lo, hi):
+    return max(lo, min(hi, v))
 
 # ==========================
 # TEMPERATURE
 # ==========================
 
-def get_temperature_baseline(profile: str, now: datetime) -> float:
-    hour = now.hour
-
+def get_temperature_baseline(profile: str, t: datetime) -> float:
+    h = t.hour
     if profile == "bedroom":
-        return 19.0 if hour < 6 else 20.0 if hour < 9 else 21.0 if hour < 18 else 22.0 if hour < 22 else 20.0
+        return 19 if h < 6 else 20 if h < 9 else 21 if h < 18 else 22 if h < 22 else 20
     if profile == "livingroom":
-        return 20.0 if hour < 6 else 21.0 if hour < 9 else 22.0 if hour < 18 else 23.0 if hour < 23 else 21.0
-
-    base = 20.0 if hour < 6 else 21.0 if hour < 18 else 22.0 if hour < 23 else 21.0
-    if (hour == 12 and now.minute < 45) or (hour == 19 and now.minute < 45):
-        base += 3.0
+        return 20 if h < 6 else 21 if h < 9 else 22 if h < 18 else 23 if h < 23 else 21
+    base = 20 if h < 6 else 21 if h < 18 else 22 if h < 23 else 21
+    if (h == 12 and t.minute < 45) or (h == 19 and t.minute < 45):
+        base += 3
     return base
 
-def simulate_temperature(profile: str, now: datetime) -> float:
-    baseline = get_temperature_baseline(profile, now)
+def simulate_temperature(profile: str, sensor_id: int, t: datetime) -> float:
+    bias = (sensor_id - 1) * 0.2
     noise = random.gauss(0, 0.4)
-    return round(clamp(baseline + noise, 16.0, 30.0), 1)
+    return round(clamp(get_temperature_baseline(profile, t) + noise + bias, 16, 30), 1)
 
 # ==========================
 # HUMIDITY
 # ==========================
 
-def get_humidity_baseline(profile: str, now: datetime) -> float:
-    hour = now.hour
-
+def get_humidity_baseline(profile: str, t: datetime) -> float:
+    h = t.hour
     if profile == "kitchen":
-        base = 45.0 if hour < 6 else 47.0 if hour < 18 else 50.0
-        if (hour == 12 and now.minute < 45) or (hour == 19 and now.minute < 45):
-            base += 20.0
+        base = 45 if h < 6 else 47 if h < 18 else 50
+        if (h == 12 and t.minute < 45) or (h == 19 and t.minute < 45):
+            base += 20
         return base
+    return 47 if h < 6 else 43 if h < 18 else 46
 
-    return 47.0 if hour < 6 else 43.0 if hour < 18 else 46.0
-
-def simulate_humidity(profile: str, now: datetime) -> float:
+def simulate_humidity(profile: str, sensor_id: int, t: datetime) -> float:
+    bias = (sensor_id - 1) * 0.5
     noise = random.gauss(0, 3.5)
-    return round(clamp(get_humidity_baseline(profile, now) + noise, 25.0, 80.0), 1)
+    return round(clamp(get_humidity_baseline(profile, t) + noise + bias, 25, 80), 1)
 
 # ==========================
 # WINDOW
 # ==========================
 
-def simulate_window(room_id: str, profile: str, now: datetime) -> int:
-    state = WINDOW_STATE[room_id]
-    hour = now.hour
+def simulate_window(room_id: str, sensor_id: int, profile: str, t: datetime) -> int:
+    key = (room_id, sensor_id)
+    if key not in WINDOW_STATE:
+        WINDOW_STATE[key] = {"open": False, "minutes": 0}
+
+    state = WINDOW_STATE[key]
+    h = t.hour
 
     if state["open"]:
-        state["minutes_left"] -= 1
-        if state["minutes_left"] <= 0:
+        state["minutes"] -= 1
+        if state["minutes"] <= 0:
             state["open"] = False
     else:
-        prob = 0.02 if profile == "livingroom" and 10 <= hour < 18 else 0.005
+        prob = 0.02 if profile == "livingroom" and 10 <= h < 18 else 0.005
         if random.random() < prob:
             state["open"] = True
-            state["minutes_left"] = random.randint(10, 30)
+            state["minutes"] = random.randint(10, 30)
 
     return 1 if state["open"] else 0
 
@@ -103,10 +104,10 @@ def simulate_window(room_id: str, profile: str, now: datetime) -> int:
 # SMOKE
 # ==========================
 
-def simulate_smoke(profile: str, now: datetime) -> int:
+def simulate_smoke(profile: str, t: datetime) -> int:
     if profile != "kitchen":
         return 0
-    if (now.hour == 12 and 20 <= now.minute < 23) or (now.hour == 19 and 10 <= now.minute < 13):
+    if (t.hour == 12 and 20 <= t.minute < 23) or (t.hour == 19 and 10 <= t.minute < 13):
         return 1
     return 0
 
@@ -114,7 +115,7 @@ def simulate_smoke(profile: str, now: datetime) -> int:
 # MQTT
 # ==========================
 
-def publish_value(client: mqtt.Client, topic: str, value):
+def publish(client, topic, value):
     client.publish(topic, str(value), qos=0, retain=False)
 
 # ==========================
@@ -134,32 +135,37 @@ def main():
             print("Connected to MQTT broker.")
             break
         except Exception as e:
-            print(f"MQTT connection failed: {e}, retrying...")
+            print(f"MQTT error: {e}, retrying...")
             time.sleep(2)
 
     client.loop_start()
-    print("Smart home simulator started.")
+    print("Simulator started.")
 
     while True:
-        now = get_local_time()
+        t = now()
 
-        for room_id, info in ROOMS.items():
-            profile = info["profile"]
+        for room in ROOMS:
+            room_id = room["id"]
+            profile = room["profile"]
+            sensors = room["sensors"]
 
-            temp = simulate_temperature(profile, now)
-            hum = simulate_humidity(profile, now)
-            window = simulate_window(room_id, profile, now)
-            smoke = simulate_smoke(profile, now)
+            for i in range(1, sensors.get("temperature", 0) + 1):
+                publish(client, f"home/{room_id}/temperature/{i}",
+                        simulate_temperature(profile, i, t))
 
-            publish_value(client, f"home/{room_id}/temperature/{SENSOR_ID}", temp)
-            publish_value(client, f"home/{room_id}/humidity/{SENSOR_ID}", hum)
-            publish_value(client, f"home/{room_id}/window/{SENSOR_ID}", window)
-            publish_value(client, f"home/{room_id}/smoke/{SENSOR_ID}", smoke)
+            for i in range(1, sensors.get("humidity", 0) + 1):
+                publish(client, f"home/{room_id}/humidity/{i}",
+                        simulate_humidity(profile, i, t))
 
-            print(f"{room_id}: T={temp} H={hum} W={window} S={smoke}")
+            for i in range(1, sensors.get("window", 0) + 1):
+                publish(client, f"home/{room_id}/window/{i}",
+                        simulate_window(room_id, i, profile, t))
+
+            for i in range(1, sensors.get("smoke", 0) + 1):
+                publish(client, f"home/{room_id}/smoke/{i}",
+                        simulate_smoke(profile, t))
 
         time.sleep(SIMULATION_INTERVAL_SECONDS)
 
 if __name__ == "__main__":
     main()
-    
