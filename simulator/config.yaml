@@ -14,7 +14,7 @@ rooms:
     profile: livingroom
     sensors:
       temperature: 1
-      humidity: 3s
+      humidity: 3
       window: 1
       smoke: 1
 
