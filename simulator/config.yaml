@@ -1,0 +1,35 @@
+simulation:
+  interval_seconds: 10
+
+rooms:
+  - id: room1
+    profile: kitchen
+    sensors:
+      temperature: 1
+      humidity: 1
+      window: 1
+      smoke: 1
+
+  - id: room2
+    profile: livingroom
+    sensors:
+      temperature: 1
+      humidity: 3
+      window: 1
+      smoke: 1
+
+  - id: room3
+    profile: bedroom
+    sensors:
+      temperature: 2
+      humidity: 1
+      window: 2
+      smoke: 1
+
+  - id: room4
+    profile: bedroom
+    sensors:
+      temperature: 1
+      humidity: 1
+      window: 1
+      smoke: 1
