@@ -12,7 +12,12 @@
                 "view-node-show-label": true,
                 "view-show-tips": true,
                 "view-show-welcome-tours": true
+            },
+            "tours": {
+                "welcome": "4.1.2"
             }
-        }
+        },
+        "menu-menu-item-palette": false,
+        "menu-menu-item-sidebar": true
     }
 }

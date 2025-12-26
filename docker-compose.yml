@@ -6,6 +6,9 @@ services:
       - "1880:1880"
     volumes:
       - ./nodered/data:/data
+    environment:
+      - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
+      - TELEGRAM_CHAT_ID=${TELEGRAM_CHAT_ID}
     networks:
       iot-network:
         ipv4_address: 172.30.0.99
@@ -26,7 +29,7 @@ services:
 
   influxdb:
     container_name: influxdb
-    image: influxdb:latest
+    image: influxdb:2.8.0
     ports:
       - "8086:8086"
     volumes:

@@ -23,21 +23,54 @@
         "rejectUnauthorized": true
     },
     {
+        "id": "68ef3381986c2cf6",
+        "type": "telegram bot",
+        "botname": "smarthouse_bot",
+        "usernames": "",
+        "chatids": "",
+        "baseapiurl": "",
+        "testenvironment": false,
+        "updatemode": "polling",
+        "pollinterval": 300,
+        "usesocks": false,
+        "sockshost": "",
+        "socksprotocol": "socks5",
+        "socksport": 6667,
+        "socksusername": "anonymous",
+        "sockspassword": "",
+        "bothost": "",
+        "botpath": "",
+        "localbothost": "0.0.0.0",
+        "localbotport": 8443,
+        "publicbotport": 8443,
+        "privatekey": "",
+        "certificate": "",
+        "useselfsignedcertificate": false,
+        "sslterminated": false,
+        "verboselogging": false
+    },
+    {
+        "id": "ad0ccdbf40c3d081",
+        "type": "global-config",
+        "env": [],
+        "modules": {}
+    },
+    {
         "id": "27ace9ab301b3114",
         "type": "influxdb in",
         "z": "f7ee29e1334162d9",
         "influxdb": "ce479483708d6c92",
         "name": "Read temperature",
-        "query": "from(bucket: \"smarthouse\")\n  |> range(start: -30m)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"temperature\")\n",
+        "query": "from(bucket: \"smarthouse\")\n  |> range(start: -30s)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"temperature\")\n",
         "rawOutput": false,
         "precision": "",
         "retentionPolicy": "",
         "org": "univaq",
         "x": 390,
-        "y": 260,
+        "y": 120,
         "wires": [
             [
-                "24d33817bc5bc3a0"
+                "8d07495c2b7ef40f"
             ]
         ]
     },
@@ -63,29 +96,12 @@
         "payload": "",
         "payloadType": "date",
         "x": 160,
-        "y": 260,
+        "y": 200,
         "wires": [
             [
                 "27ace9ab301b3114"
             ]
         ]
-    },
-    {
-        "id": "24d33817bc5bc3a0",
-        "type": "debug",
-        "z": "f7ee29e1334162d9",
-        "name": "debug 2",
-        "active": true,
-        "tosidebar": true,
-        "console": false,
-        "tostatus": false,
-        "complete": "payload",
-        "targetType": "msg",
-        "statusVal": "",
-        "statusType": "auto",
-        "x": 600,
-        "y": 260,
-        "wires": []
     },
     {
         "id": "c9dcb590a421687d",
@@ -121,34 +137,243 @@
         "type": "influxdb in",
         "z": "f7ee29e1334162d9",
         "influxdb": "ce479483708d6c92",
-        "name": "Read humidity",
-        "query": "from(bucket: \"smarthouse\")\n  |> range(start: -30m)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"humidity\")\n",
+        "name": "Read smoke",
+        "query": "from(bucket: \"smarthouse\")\n  |> range(start: -10m)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"smoke\")\n  |> last()\n",
         "rawOutput": false,
         "precision": "",
         "retentionPolicy": "",
         "org": "univaq",
-        "x": 380,
+        "x": 390,
         "y": 340,
         "wires": [
             [
-                "8b5c8ad637967d72"
+                "0dd14c3d233c241e"
             ]
         ]
     },
     {
-        "id": "8b5c8ad637967d72",
-        "type": "debug",
+        "id": "8d07495c2b7ef40f",
+        "type": "function",
         "z": "f7ee29e1334162d9",
-        "name": "debug 1",
-        "active": true,
-        "tosidebar": true,
-        "console": false,
-        "tostatus": false,
-        "complete": "false",
-        "statusVal": "",
-        "statusType": "auto",
-        "x": 600,
+        "name": "create_temp_alarms",
+        "func": "let alarms = [];\nlet states = flow.get(\"alarmStates\") || {};\n\nlet threshold = 21;\nfor (let p of msg.payload) {\n    let key = `${p.room}_${p.device_id}`;\n    let temp = p._value;\n\n    // Initialize state if missing\n    if (!states[key]) {\n        states[key] = { active: false };\n    }\n\n\n    // Alarm condition\n    if (temp > threshold && !states[key].active) {\n        states[key].active = true;\n\n        alarms.push({\n            topic: key,\n            message: `🔥 High temperature alarm | Room: ${p.room}, Device: ${p.device_id}, Temp: ${temp}°C`\n        });\n    }\n\n    // Clear alarm\n    if (temp <= threshold && states[key].active) {\n        states[key].active = false;\n\n        alarms.push({\n            topic: key,\n            message: `✅ Temperature back to normal | Room: ${p.room}, Device: ${p.device_id}, Temp: ${temp}°C`\n        });\n    }\n}\n\nflow.set(\"alarmStates\", states);\nnode.warn(alarms)\nmsg.payload = alarms\nreturn msg;\n",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 660,
+        "y": 120,
+        "wires": [
+            [
+                "978c8c66f3c365aa"
+            ]
+        ]
+    },
+    {
+        "id": "0dd14c3d233c241e",
+        "type": "function",
+        "z": "f7ee29e1334162d9",
+        "name": "create_smoke_alarms",
+        "func": "// msg.payload = array of points from InfluxDB\nlet latestPerSensor = {};\n\n// Iterate over all points\nmsg.payload.forEach(point => {\n    let key = point.room + \"_\" + point.device_id;\n    // Keep the latest point per sensor\n    if (!latestPerSensor[key] || point._time > latestPerSensor[key]._time) {\n        latestPerSensor[key] = point;\n    }\n});\n\n// Convert back to array\nmsg.payload = Object.values(latestPerSensor);\n\n// Optionally, check for smoke per sensor\nlet alerts = msg.payload.map(point => {\n    return {\n        room: point.room,\n        device_id: point.device_id,\n        smoke: point._value === 1\n    };\n});\n\nmsg.payload = alerts;\nreturn msg;\n",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 680,
         "y": 340,
+        "wires": [
+            [
+                "d98595ec31dad584"
+            ]
+        ]
+    },
+    {
+        "id": "d98595ec31dad584",
+        "type": "split",
+        "z": "f7ee29e1334162d9",
+        "name": "",
+        "splt": "\\n",
+        "spltType": "str",
+        "arraySplt": 1,
+        "arraySpltType": "len",
+        "stream": false,
+        "addname": "",
+        "property": "payload",
+        "x": 870,
+        "y": 340,
+        "wires": [
+            [
+                "a123294122c79941"
+            ]
+        ]
+    },
+    {
+        "id": "978c8c66f3c365aa",
+        "type": "split",
+        "z": "f7ee29e1334162d9",
+        "name": "",
+        "splt": "\\n",
+        "spltType": "str",
+        "arraySplt": 1,
+        "arraySpltType": "len",
+        "stream": false,
+        "addname": "",
+        "property": "payload",
+        "x": 870,
+        "y": 120,
+        "wires": [
+            [
+                "fcbfa811c970555f"
+            ]
+        ]
+    },
+    {
+        "id": "a123294122c79941",
+        "type": "switch",
+        "z": "f7ee29e1334162d9",
+        "name": "Filter alarms",
+        "property": "payload.smoke",
+        "propertyType": "msg",
+        "rules": [
+            {
+                "t": "eq",
+                "v": "1",
+                "vt": "str"
+            }
+        ],
+        "checkall": "true",
+        "repair": false,
+        "outputs": 1,
+        "x": 330,
+        "y": 460,
+        "wires": [
+            [
+                "a1117a28349da074"
+            ]
+        ]
+    },
+    {
+        "id": "909863c176cb4a06",
+        "type": "comment",
+        "z": "f7ee29e1334162d9",
+        "name": "",
+        "info": "For temperature, states are saved to have the back to normal msg.\nFor smoke, there's no back to normal",
+        "x": 600,
+        "y": 300,
         "wires": []
+    },
+    {
+        "id": "a1117a28349da074",
+        "type": "change",
+        "z": "f7ee29e1334162d9",
+        "name": "Prepare telegram msg",
+        "rules": [
+            {
+                "t": "set",
+                "p": "payload.chatId",
+                "pt": "msg",
+                "to": "TELEGRAM_CHAT_ID",
+                "tot": "env"
+            },
+            {
+                "t": "set",
+                "p": "payload.type",
+                "pt": "msg",
+                "to": "message",
+                "tot": "str"
+            },
+            {
+                "t": "set",
+                "p": "payload.content",
+                "pt": "msg",
+                "to": "\"[WARNING] Smoke detected in room: *\"& (payload.room) &\"*. Source device: *\"&\t(payload.device_id)&\"*\"",
+                "tot": "jsonata"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 620,
+        "y": 460,
+        "wires": [
+            [
+                "cc5a90fc62dcef82"
+            ]
+        ]
+    },
+    {
+        "id": "cc5a90fc62dcef82",
+        "type": "telegram sender",
+        "z": "f7ee29e1334162d9",
+        "name": "",
+        "bot": "68ef3381986c2cf6",
+        "haserroroutput": false,
+        "outputs": 1,
+        "x": 850,
+        "y": 460,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "fcbfa811c970555f",
+        "type": "change",
+        "z": "f7ee29e1334162d9",
+        "name": "Prepare telegram msg",
+        "rules": [
+            {
+                "t": "set",
+                "p": "payload.chatId",
+                "pt": "msg",
+                "to": "TELEGRAM_CHAT_ID",
+                "tot": "env"
+            },
+            {
+                "t": "set",
+                "p": "payload.type",
+                "pt": "msg",
+                "to": "message",
+                "tot": "str"
+            },
+            {
+                "t": "set",
+                "p": "payload.content",
+                "pt": "msg",
+                "to": "payload.message",
+                "tot": "msg"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 420,
+        "y": 220,
+        "wires": [
+            [
+                "f6fe3d6f0fe67d25"
+            ]
+        ]
+    },
+    {
+        "id": "f6fe3d6f0fe67d25",
+        "type": "telegram sender",
+        "z": "f7ee29e1334162d9",
+        "name": "",
+        "bot": "68ef3381986c2cf6",
+        "haserroroutput": false,
+        "outputs": 1,
+        "x": 850,
+        "y": 220,
+        "wires": [
+            []
+        ]
     }
 ]
