@@ -448,30 +448,5 @@
                 "file": "/usr/src/node-red/node_modules/node-red-contrib-influxdb/influxdb.js"
             }
         }
-    },
-    "node-red-contrib-telegrambot": {
-        "name": "node-red-contrib-telegrambot",
-        "version": "17.0.3",
-        "local": false,
-        "user": false,
-        "nodes": {
-            "telegrambot": {
-                "name": "telegrambot",
-                "types": [
-                    "telegram bot",
-                    "telegram receiver",
-                    "telegram command",
-                    "telegram event",
-                    "telegram sender",
-                    "telegram reply",
-                    "telegram control"
-                ],
-                "enabled": true,
-                "local": false,
-                "user": false,
-                "module": "node-red-contrib-telegrambot",
-                "file": "/usr/src/node-red/node_modules/node-red-contrib-telegrambot/telegrambot/99-telegrambot.js"
-            }
-        }
     }
 }
