@@ -1,7 +1,7 @@
 import time
 import random
 import os
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Dict, Tuple
 import yaml
 import paho.mqtt.client as mqtt
@@ -77,39 +77,29 @@ def simulate_humidity(profile: str, sensor_id: int, t: datetime) -> float:
     return round(clamp(get_humidity_baseline(profile, t) + noise + bias, 25, 80), 1)
 
 # ==========================
-# WINDOW
+# WINDOW (independent per sensor)
 # ==========================
 
-def simulate_window(room_id: str, sensor_id: int, profile: str, t: datetime) -> int:
-    key = (room_id, sensor_id)
-    if key not in WINDOW_STATE:
-        WINDOW_STATE[key] = {"open": False, "minutes": 0}
+def simulate_window(sensor_id: int) -> int:
+    bias = (sensor_id - 1) * 0.1
+    noise = random.gauss(0, 0.5)
+    value = noise + bias
+    return 1 if value > 0.6 else 0
 
-    state = WINDOW_STATE[key]
-    h = t.hour
 
-    if state["open"]:
-        state["minutes"] -= 1
-        if state["minutes"] <= 0:
-            state["open"] = False
-    else:
-        prob = 0.02 if profile == "livingroom" and 10 <= h < 18 else 0.005
-        if random.random() < prob:
-            state["open"] = True
-            state["minutes"] = random.randint(10, 30)
-
-    return 1 if state["open"] else 0
 
 # ==========================
-# SMOKE
+# SMOKE (independent per sensor)
 # ==========================
 
-def simulate_smoke(profile: str, t: datetime) -> int:
-    if profile != "kitchen":
-        return 0
-    if (t.hour == 12 and 20 <= t.minute < 23) or (t.hour == 19 and 10 <= t.minute < 13):
-        return 1
-    return 0
+def simulate_smoke(profile: str, sensor_id: int) -> int:
+    bias = (sensor_id - 1) * 0.05
+    base = 0.6 if profile == "kitchen" else -0.6
+    noise = random.gauss(0, 0.7)
+    value = base + noise + bias
+    return 1 if value > 0.8 else 0
+
+
 
 # ==========================
 # MQTT
@@ -159,12 +149,11 @@ def main():
 
             for i in range(1, sensors.get("window", 0) + 1):
                 publish(client, f"home/{room_id}/window/{i}",
-                        simulate_window(room_id, i, profile, t))
+                        simulate_window(i))
 
             for i in range(1, sensors.get("smoke", 0) + 1):
                 publish(client, f"home/{room_id}/smoke/{i}",
-                        simulate_smoke(profile, t))
-
+                        simulate_smoke(profile, i))
         time.sleep(SIMULATION_INTERVAL_SECONDS)
 
 if __name__ == "__main__":
