@@ -93,12 +93,13 @@ def simulate_window(sensor_id: int) -> int:
 # ==========================
 
 def simulate_smoke(profile: str, sensor_id: int) -> int:
+    if profile == "kitchen":
+        return 1
     bias = (sensor_id - 1) * 0.05
-    base = 0.6 if profile == "kitchen" else -0.6
+    base = 0.2
     noise = random.gauss(0, 0.7)
     value = base + noise + bias
     return 1 if value > 0.8 else 0
-
 
 
 # ==========================
