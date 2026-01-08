@@ -9,18 +9,9 @@ This project was developed for the **Software Engineering for Internet of Things
 
 ## System Architecture
 
-The Smart Home system is composed of multiple containerized services that work together to simulate, process, store, visualize, and react to sensor data.
-
-A Python-based simulator represents smart home sensors deployed across different rooms. These sensors periodically generate measurements as and publish them to an MQTT broker using a structured topic hierarchy. The home is totally configurable, from the number of rooms and number of sensor devices in each room to sensor measurement periods. 
-
-The MQTT broker (Mosquitto) acts as the central communication layer, distributing sensor messages to subscribed services. Telegraf subscribes to the MQTT topics and automatically ingests the sensor data, parsing metadata such as room and sensor identifiers directly from the topic structure. All measurements are stored in InfluxDB as time-series data.
-
-Grafana connects to InfluxDB to provide interactive dashboards, enabling real-time monitoring and historical analysis of sensor values across rooms and sensor types.
-
-In parallel, Node-RED listens to sensor data streams and applies application-level logic to detect abnormal conditions. When anomalies such as smoke detection or unusual temperature values occur, Node-RED triggers notifications that are sent to the homeowner via Telegram.
-
-All components are orchestrated using Docker Compose, forming a complete end-to-end pipeline from sensor simulation to visualization and alerting.
-
+<p align="center">
+  <img src="architecture.png" alt="logo" width="70%"/>
+</p>
 ## Built with
 
 [![Python][Python.org]][Python-url][![Docker][Docker.com]][Docker-url][![MQTT][MQTT.com]][MQTT-url][![Telegraf][Telegraf.org]][Telegraf-url][![Grafana][Grafana.com]][Grafana-url][![InfluxDB][InfluxDB.com]][InfluxDB-url][![Nodered][Nodered.org]][Nodered-url][![Telegram][Telegram.org]][Telegram-url]
