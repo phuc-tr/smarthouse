@@ -51,7 +51,7 @@ docker-compose up
 
 Navigate to http://localhost:3000/, where you can see the dashboard. Use the following credentials: username=`admin`, password=`admin`.
 
-To interact with InfluxDB, navigate to http://localhost:8086/. Use the following credentials: username=`admin`, password=`admin1234`.......... --- HERE Maybe briefly give instructions---
+To interact with InfluxDB, navigate to http://localhost:8086/. Use the following credentials: username=`admin`, password=`admin1234`
 
 To open the Node-RED editor, navigate to http://localhost:1880/.
 
