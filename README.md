@@ -65,7 +65,7 @@ Make sure that the following ports are available on your system:
 ## Developed by
 
 - [Mete Harun Akcay](https://github.com/meteharun)
-- [Than Phuc Tran](https://github.com/phuc-tr)
+- [Thanh Phuc Tran](https://github.com/phuc-tr)
 - [Pragati Manandhar](https://github.com/mdhrpragati)
 
 
