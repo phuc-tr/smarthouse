@@ -12,6 +12,7 @@ This project was developed for the **Software Engineering for Internet of Things
 <p align="center">
   <img src="architecture.png" alt="logo" width="70%"/>
 </p>
+
 ## Built with
 
 [![Python][Python.org]][Python-url][![Docker][Docker.com]][Docker-url][![MQTT][MQTT.com]][MQTT-url][![Telegraf][Telegraf.org]][Telegraf-url][![Grafana][Grafana.com]][Grafana-url][![InfluxDB][InfluxDB.com]][InfluxDB-url][![Nodered][Nodered.org]][Nodered-url][![Telegram][Telegram.org]][Telegram-url]
