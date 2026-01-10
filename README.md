@@ -2,7 +2,7 @@
 ## About the Project
 
 <p align="center">
-  <img src="grafana" alt="logo" width="70%"/>
+  <img src="grafana.png" alt="logo" width="70%"/>
 </p>
 
 This project presents a Smart Home system that simulates how IoT devices communicate and operate together in a realistic home environment. The system demonstrates an end-to-end IoT architecture, starting from sensor data generation to storage, visualization, and real-time user notifications.
