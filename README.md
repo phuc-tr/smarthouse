@@ -1,6 +1,10 @@
 # Smart Home
 ## About the Project
 
+<p align="center">
+  <img src="grafana" alt="logo" width="70%"/>
+</p>
+
 This project presents a Smart Home system that simulates how IoT devices communicate and operate together in a realistic home environment. The system demonstrates an end-to-end IoT architecture, starting from sensor data generation to storage, visualization, and real-time user notifications.
 
 A configurable simulator generates data from multiple virtual sensors including temperature, humidity, window state, and smoke detectors across different rooms. The simulated devices publish their data using MQTT, which is then collected and stored in a time-series database. Grafana dashboards allow real-time monitoring and historical analysis of sensor values, while abnormal conditions such as smoke detection or unusual temperature values automatically trigger alerts sent to the homeowner via Telegram.
