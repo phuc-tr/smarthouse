@@ -63,8 +63,27 @@ Make sure that the following ports are available on your system:
 - `3000` for Grafana
 
 ### Telegram Notifications
+To enable Telegram notifications:
 
-...
+1. Create a Telegram bot
+   - Open Telegram and start a chat with @BotFather.
+   - Send `/newbot` and follow the prompts. Copy the bot token (looks like `123456:ABC-DEF...`).
+
+2. Obtain your chat id
+   - Add `@getidsbot` to the chat and follow its instructions to obtain your `chat_id`.
+
+3. Configure environment variables
+   - Create a `.env` file in the project root and add:
+
+```env
+TELEGRAM_BOT_TOKEN=your_bot_token_here
+TELEGRAM_CHAT_ID=your_chat_id_here
+```
+4. Restart docker compose for the environment variables to take effect.
+
+If successful, notifications will be sent to Telegram as shown in the screenshot below:
+![Notifications screenshot](telegram.png)
+
 
 ## Developed by
 
