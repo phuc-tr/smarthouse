@@ -14,7 +14,7 @@ This project was developed for the **Software Engineering for Internet of Things
 ## System Architecture
 
 <p align="center">
-  <img src="architecture.png" alt="logo" width="70%"/>
+  <img src="architecture.png" alt="architecture" width="70%"/>
 </p>
 
 ## Built with
@@ -82,8 +82,10 @@ TELEGRAM_CHAT_ID=your_chat_id_here
 4. Restart docker compose for the environment variables to take effect.
 
 If successful, notifications will be sent to Telegram as shown in the screenshot below:
-![Notifications screenshot](telegram.png)
 
+<p align="center">
+  <img src="telegram.png" alt="telegram" width="70%"/>
+</p>
 
 ## Developed by
 
