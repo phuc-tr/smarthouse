@@ -56,26 +56,27 @@
         "modules": {}
     },
     {
-        "id": "27ace9ab301b3114",
-        "type": "influxdb in",
+        "id": "696d8ddefb170dd4",
+        "type": "file in",
         "z": "f7ee29e1334162d9",
-        "influxdb": "ce479483708d6c92",
-        "name": "Read temperature",
-        "query": "from(bucket: \"smarthouse\")\n  |> range(start: -30s)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"temperature\")\n",
-        "rawOutput": false,
-        "precision": "",
-        "retentionPolicy": "",
-        "org": "univaq",
-        "x": 390,
+        "name": "Read config",
+        "filename": "/data/config.json",
+        "filenameType": "str",
+        "format": "utf8",
+        "chunk": false,
+        "sendError": false,
+        "encoding": "none",
+        "allProps": false,
+        "x": 330,
         "y": 120,
         "wires": [
             [
-                "8d07495c2b7ef40f"
+                "755cf93ac3949ed3"
             ]
         ]
     },
     {
-        "id": "5f8f04323e64879b",
+        "id": "dbaeb8dd5164a305",
         "type": "inject",
         "z": "f7ee29e1334162d9",
         "name": "",
@@ -95,107 +96,35 @@
         "topic": "",
         "payload": "",
         "payloadType": "date",
-        "x": 160,
-        "y": 200,
-        "wires": [
-            [
-                "27ace9ab301b3114"
-            ]
-        ]
-    },
-    {
-        "id": "c9dcb590a421687d",
-        "type": "inject",
-        "z": "f7ee29e1334162d9",
-        "name": "",
-        "props": [
-            {
-                "p": "payload"
-            },
-            {
-                "p": "topic",
-                "vt": "str"
-            }
-        ],
-        "repeat": "",
-        "crontab": "",
-        "once": false,
-        "onceDelay": 0.1,
-        "topic": "",
-        "payload": "",
-        "payloadType": "date",
-        "x": 160,
-        "y": 340,
-        "wires": [
-            [
-                "a515d77e6052162b"
-            ]
-        ]
-    },
-    {
-        "id": "a515d77e6052162b",
-        "type": "influxdb in",
-        "z": "f7ee29e1334162d9",
-        "influxdb": "ce479483708d6c92",
-        "name": "Read smoke",
-        "query": "from(bucket: \"smarthouse\")\n  |> range(start: -10m)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"smoke\")\n  |> last()\n",
-        "rawOutput": false,
-        "precision": "",
-        "retentionPolicy": "",
-        "org": "univaq",
-        "x": 390,
-        "y": 340,
-        "wires": [
-            [
-                "0dd14c3d233c241e"
-            ]
-        ]
-    },
-    {
-        "id": "8d07495c2b7ef40f",
-        "type": "function",
-        "z": "f7ee29e1334162d9",
-        "name": "create_temp_alarms",
-        "func": "let alarms = [];\nlet states = flow.get(\"alarmStates\") || {};\n\nlet threshold = 21;\nfor (let p of msg.payload) {\n    let key = `${p.room}_${p.device_id}`;\n    let temp = p._value;\n\n    // Initialize state if missing\n    if (!states[key]) {\n        states[key] = { active: false };\n    }\n\n\n    // Alarm condition\n    if (temp > threshold && !states[key].active) {\n        states[key].active = true;\n\n        alarms.push({\n            topic: key,\n            message: `🔥 High temperature alarm | Room: ${p.room}, Device: ${p.device_id}, Temp: ${temp}°C`\n        });\n    }\n\n    // Clear alarm\n    if (temp <= threshold && states[key].active) {\n        states[key].active = false;\n\n        alarms.push({\n            topic: key,\n            message: `✅ Temperature back to normal | Room: ${p.room}, Device: ${p.device_id}, Temp: ${temp}°C`\n        });\n    }\n}\n\nflow.set(\"alarmStates\", states);\nnode.warn(alarms)\nmsg.payload = alarms\nreturn msg;\n",
-        "outputs": 1,
-        "timeout": 0,
-        "noerr": 0,
-        "initialize": "",
-        "finalize": "",
-        "libs": [],
-        "x": 660,
+        "x": 140,
         "y": 120,
         "wires": [
             [
-                "978c8c66f3c365aa"
+                "696d8ddefb170dd4"
             ]
         ]
     },
     {
-        "id": "0dd14c3d233c241e",
-        "type": "function",
-        "z": "f7ee29e1334162d9",
-        "name": "create_smoke_alarms",
-        "func": "// msg.payload = array of points from InfluxDB\nlet latestPerSensor = {};\n\n// Iterate over all points\nmsg.payload.forEach(point => {\n    let key = point.room + \"_\" + point.device_id;\n    // Keep the latest point per sensor\n    if (!latestPerSensor[key] || point._time > latestPerSensor[key]._time) {\n        latestPerSensor[key] = point;\n    }\n});\n\n// Convert back to array\nmsg.payload = Object.values(latestPerSensor);\n\n// Optionally, check for smoke per sensor\nlet alerts = msg.payload.map(point => {\n    return {\n        room: point.room,\n        device_id: point.device_id,\n        smoke: point._value === 1\n    };\n});\n\nmsg.payload = alerts;\nreturn msg;\n",
-        "outputs": 1,
-        "timeout": 0,
-        "noerr": 0,
-        "initialize": "",
-        "finalize": "",
-        "libs": [],
-        "x": 680,
-        "y": 340,
-        "wires": [
-            [
-                "d98595ec31dad584"
-            ]
-        ]
-    },
-    {
-        "id": "d98595ec31dad584",
-        "type": "split",
+        "id": "755cf93ac3949ed3",
+        "type": "json",
         "z": "f7ee29e1334162d9",
         "name": "",
+        "property": "payload",
+        "action": "",
+        "pretty": false,
+        "x": 530,
+        "y": 120,
+        "wires": [
+            [
+                "ebf74b31a91105a5"
+            ]
+        ]
+    },
+    {
+        "id": "ebf74b31a91105a5",
+        "type": "split",
+        "z": "f7ee29e1334162d9",
+        "name": "Split config",
         "splt": "\\n",
         "spltType": "str",
         "arraySplt": 1,
@@ -203,126 +132,100 @@
         "stream": false,
         "addname": "",
         "property": "payload",
-        "x": 870,
-        "y": 340,
-        "wires": [
-            [
-                "a123294122c79941"
-            ]
-        ]
-    },
-    {
-        "id": "978c8c66f3c365aa",
-        "type": "split",
-        "z": "f7ee29e1334162d9",
-        "name": "",
-        "splt": "\\n",
-        "spltType": "str",
-        "arraySplt": 1,
-        "arraySpltType": "len",
-        "stream": false,
-        "addname": "",
-        "property": "payload",
-        "x": 870,
+        "x": 750,
         "y": 120,
         "wires": [
             [
-                "fcbfa811c970555f"
+                "6f7860e9f49c967f"
             ]
         ]
     },
     {
-        "id": "a123294122c79941",
+        "id": "6f7860e9f49c967f",
         "type": "switch",
         "z": "f7ee29e1334162d9",
-        "name": "Filter alarms",
-        "property": "payload.smoke",
+        "name": "Get active sensors",
+        "property": "payload.active",
         "propertyType": "msg",
         "rules": [
             {
                 "t": "eq",
-                "v": "1",
-                "vt": "str"
+                "v": "true",
+                "vt": "jsonata"
             }
         ],
         "checkall": "true",
         "repair": false,
         "outputs": 1,
-        "x": 330,
-        "y": 460,
+        "x": 150,
+        "y": 360,
         "wires": [
             [
-                "a1117a28349da074"
+                "99a7dff4065c465a"
             ]
         ]
     },
     {
-        "id": "909863c176cb4a06",
-        "type": "comment",
+        "id": "2d666efb43a783aa",
+        "type": "influxdb in",
         "z": "f7ee29e1334162d9",
-        "name": "",
-        "info": "For temperature, states are saved to have the back to normal msg.\nFor smoke, there's no back to normal",
-        "x": 600,
-        "y": 300,
-        "wires": []
-    },
-    {
-        "id": "a1117a28349da074",
-        "type": "change",
-        "z": "f7ee29e1334162d9",
-        "name": "Prepare telegram msg",
-        "rules": [
-            {
-                "t": "set",
-                "p": "payload.chatId",
-                "pt": "msg",
-                "to": "TELEGRAM_CHAT_ID",
-                "tot": "env"
-            },
-            {
-                "t": "set",
-                "p": "payload.type",
-                "pt": "msg",
-                "to": "message",
-                "tot": "str"
-            },
-            {
-                "t": "set",
-                "p": "payload.content",
-                "pt": "msg",
-                "to": "\"[WARNING] Smoke detected in room: *\"& (payload.room) &\"*. Source device: *\"&\t(payload.device_id)&\"*\"",
-                "tot": "jsonata"
-            }
-        ],
-        "action": "",
-        "property": "",
-        "from": "",
-        "to": "",
-        "reg": false,
+        "influxdb": "ce479483708d6c92",
+        "name": "influxdb Read",
+        "query": "",
+        "rawOutput": false,
+        "precision": "",
+        "retentionPolicy": "",
+        "org": "univaq",
         "x": 620,
-        "y": 460,
+        "y": 360,
         "wires": [
             [
-                "cc5a90fc62dcef82"
+                "8d1cf85c6009534b"
             ]
         ]
     },
     {
-        "id": "cc5a90fc62dcef82",
-        "type": "telegram sender",
+        "id": "99a7dff4065c465a",
+        "type": "function",
         "z": "f7ee29e1334162d9",
-        "name": "",
-        "bot": "68ef3381986c2cf6",
-        "haserroroutput": false,
+        "name": "Create query",
+        "func": "msg.query = `\nfrom(bucket: \"smarthouse\")\n  |> range(start: -10m)\n  |> filter(fn: (r) => r._measurement == \"${msg.payload.sensor}\")\n  |> last()\n`;\n\n//Save payload because influxdb node will replace it\nmsg.data = msg.payload\n\nreturn msg;\n",
         "outputs": 1,
-        "x": 850,
-        "y": 460,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 390,
+        "y": 360,
         "wires": [
-            []
+            [
+                "2d666efb43a783aa"
+            ]
         ]
     },
     {
-        "id": "fcbfa811c970555f",
+        "id": "baddc756a16e346c",
+        "type": "function",
+        "z": "f7ee29e1334162d9",
+        "name": "Create alarms stateful",
+        "func": "let alarms = [];\nlet states = flow.get(\"alarmStates\") || {};\n\nlet threshold = msg.data.threshold;\n\nfor (let p of msg.payload) {\n    let key = `${msg.data.sensor}_${p.room}_${p.device_id}`;\n    let temp = p._value;\n\n    // Initialize state if missing\n    if (!states[key]) {\n        states[key] = { active: false };\n    }\n\n\n    // Alarm condition\n    if (temp >= threshold && !states[key].active) {\n        states[key].active = true;\n\n        alarms.push({\n            topic: key,\n            message: `${msg.data.msg_above} | Room: ${p.room}, Device: ${p.device_id}, Value: ${temp} ${msg.data.unit}`\n        });\n    }\n\n    // Clear alarm\n    if (temp < threshold && states[key].active) {\n        states[key].active = false;\n\n        alarms.push({\n            topic: key,\n            message: `${msg.data.msg_under} | Room: ${p.room}, Device: ${p.device_id}, Value: ${temp} ${msg.data.unit}`\n        });\n    }\n}\n\nflow.set(\"alarmStates\", states);\n//node.warn(alarms)\nmsg.payload = alarms\nreturn msg;\n",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 540,
+        "y": 520,
+        "wires": [
+            [
+                "2a74be9bfac931d8"
+            ]
+        ]
+    },
+    {
+        "id": "f1dacbb09345eaa6",
         "type": "change",
         "z": "f7ee29e1334162d9",
         "name": "Prepare telegram msg",
@@ -354,26 +257,99 @@
         "from": "",
         "to": "",
         "reg": false,
-        "x": 420,
-        "y": 220,
+        "x": 1080,
+        "y": 480,
         "wires": [
             [
-                "f6fe3d6f0fe67d25"
+                "9bebfb9127bffd6c"
             ]
         ]
     },
     {
-        "id": "f6fe3d6f0fe67d25",
+        "id": "0fa87ccf67025c08",
+        "type": "function",
+        "z": "f7ee29e1334162d9",
+        "name": "Create alarms stateless",
+        "func": "// msg.payload = array of last points from InfluxDB\nlet alarms = [];\n\n// Create and push alarms\nmsg.payload.forEach(point => {\n    if (point._value >= msg.data.threshold) {\n        alarms.push({\n            topic: `${point.room}_${point.device_id}`,\n            message: `${msg.data.msg_above} | Room: ${point.room}, Device: ${point.device_id}`\n        });\n    }\n});\n\nmsg.payload = alarms;\nreturn msg;\n",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 530,
+        "y": 720,
+        "wires": [
+            [
+                "2a74be9bfac931d8"
+            ]
+        ]
+    },
+    {
+        "id": "9bebfb9127bffd6c",
         "type": "telegram sender",
         "z": "f7ee29e1334162d9",
         "name": "",
         "bot": "68ef3381986c2cf6",
         "haserroroutput": false,
         "outputs": 1,
-        "x": 850,
-        "y": 220,
+        "x": 1070,
+        "y": 740,
         "wires": [
             []
+        ]
+    },
+    {
+        "id": "8d1cf85c6009534b",
+        "type": "switch",
+        "z": "f7ee29e1334162d9",
+        "name": "",
+        "property": "data.stateful",
+        "propertyType": "msg",
+        "rules": [
+            {
+                "t": "eq",
+                "v": "true",
+                "vt": "jsonata"
+            },
+            {
+                "t": "eq",
+                "v": "false",
+                "vt": "jsonata"
+            }
+        ],
+        "checkall": "true",
+        "repair": false,
+        "outputs": 2,
+        "x": 150,
+        "y": 620,
+        "wires": [
+            [
+                "baddc756a16e346c"
+            ],
+            [
+                "0fa87ccf67025c08"
+            ]
+        ]
+    },
+    {
+        "id": "2a74be9bfac931d8",
+        "type": "split",
+        "z": "f7ee29e1334162d9",
+        "name": "Split alarms",
+        "splt": "\\n",
+        "spltType": "str",
+        "arraySplt": 1,
+        "arraySpltType": "len",
+        "stream": false,
+        "addname": "",
+        "property": "payload",
+        "x": 810,
+        "y": 620,
+        "wires": [
+            [
+                "f1dacbb09345eaa6"
+            ]
         ]
     }
 ]

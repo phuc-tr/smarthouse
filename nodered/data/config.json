@@ -1,0 +1,33 @@
+[
+    {
+        "sensor": "temperature",
+        "active": true,
+        "stateful": true,
+        "threshold": 21,
+        "msg_above": "🔥 High temperature alarm",
+        "msg_under": "✅ Temperature back to normal",
+        "unit": "°C"
+    },
+    {
+        "sensor": "smoke",
+        "active": true,
+        "stateful": false,
+        "threshold": 1,
+        "msg_above": "💨 Smoke detected!"
+    },    
+    {
+        "sensor": "humidity",
+        "active": true,
+        "stateful": true,
+        "threshold": 47,
+        "msg_above": "💦 High humidity alarm",
+        "msg_under": "✅ Humidity back to normal",
+        "unit": "RH"   
+    },    {
+        "sensor": "window",
+        "active": true,
+        "stateful": false,
+        "threshold": 1,
+        "msg_above": "Window is opened"
+    }
+]
