@@ -17,7 +17,7 @@
     },    
     {
         "sensor": "humidity",
-        "active": true,
+        "active": false,
         "stateful": true,
         "threshold": 47,
         "msg_above": "💦 High humidity alarm",
@@ -25,7 +25,7 @@
         "unit": "RH"   
     },    {
         "sensor": "window",
-        "active": true,
+        "active": false,
         "stateful": false,
         "threshold": 1,
         "msg_above": "Window is opened"
