@@ -1,8 +1,8 @@
 import time
 import random
 import os
-from datetime import datetime, timedelta
-from typing import Dict, Tuple
+from datetime import datetime
+from typing import Dict, Any
 import yaml
 import paho.mqtt.client as mqtt
 
@@ -23,10 +23,8 @@ with open(CONFIG_PATH, "r") as f:
     CONFIG = yaml.safe_load(f)
 
 SIMULATION_INTERVAL_SECONDS = CONFIG["simulation"]["interval_seconds"]
+PROFILES = CONFIG["profiles"]
 ROOMS = CONFIG["rooms"]
-
-# Window state per (room_id, sensor_id)
-WINDOW_STATE: Dict[Tuple[str, int], Dict] = {}
 
 # ==========================
 # UTILS
@@ -39,68 +37,103 @@ def clamp(v, lo, hi):
     return max(lo, min(hi, v))
 
 # ==========================
+# BASELINE FROM CONFIG
+# ==========================
+
+def get_baseline(profile_name: str, sensor_type: str, t: datetime) -> float:
+    """
+    Get baseline value from config based on profile, sensor type, and current hour.
+    Returns the value from the first matching interval, or default if no match.
+    """
+    if profile_name not in PROFILES:
+        return 20.0
+    
+    profile = PROFILES[profile_name]
+    
+    if sensor_type not in profile:
+        return 20.0
+    
+    sensor_config = profile[sensor_type]
+    default_value = sensor_config.get("default", 20.0)
+    intervals = sensor_config.get("intervals", [])
+    
+    current_hour = t.hour
+    
+    for interval in intervals:
+        start_hour, end_hour, value = interval
+        if start_hour <= current_hour < end_hour:
+            return float(value)
+    
+    return float(default_value)
+
+def get_probability(profile_name: str, sensor_type: str) -> float:
+    """
+    Get base probability from config for window or smoke sensors.
+    Returns value between 0.0 and 1.0.
+    """
+    if profile_name not in PROFILES:
+        return 0.1  # Default 10%
+    
+    profile = PROFILES[profile_name]
+    
+    if sensor_type not in profile:
+        return 0.1
+    
+    sensor_config = profile[sensor_type]
+    return float(sensor_config.get("base_probability", 0.1))
+
+# ==========================
 # TEMPERATURE
 # ==========================
 
-def get_temperature_baseline(profile: str, t: datetime) -> float:
-    h = t.hour
-    if profile == "bedroom":
-        return 19 if h < 6 else 20 if h < 9 else 21 if h < 18 else 22 if h < 22 else 20
-    if profile == "livingroom":
-        return 20 if h < 6 else 21 if h < 9 else 22 if h < 18 else 23 if h < 23 else 21
-    base = 20 if h < 6 else 21 if h < 18 else 22 if h < 23 else 21
-    if (h == 12 and t.minute < 45) or (h == 19 and t.minute < 45):
-        base += 3
-    return base
-
 def simulate_temperature(profile: str, sensor_id: int, t: datetime) -> float:
+    baseline = get_baseline(profile, "temperature", t)
     bias = (sensor_id - 1) * 0.2
     noise = random.gauss(0, 0.4)
-    return round(clamp(get_temperature_baseline(profile, t) + noise + bias, 16, 30), 1)
+    return round(clamp(baseline + noise + bias, 16, 30), 1)
 
 # ==========================
 # HUMIDITY
 # ==========================
 
-def get_humidity_baseline(profile: str, t: datetime) -> float:
-    h = t.hour
-    if profile == "kitchen":
-        base = 45 if h < 6 else 47 if h < 18 else 50
-        if (h == 12 and t.minute < 45) or (h == 19 and t.minute < 45):
-            base += 20
-        return base
-    return 47 if h < 6 else 43 if h < 18 else 46
-
 def simulate_humidity(profile: str, sensor_id: int, t: datetime) -> float:
+    baseline = get_baseline(profile, "humidity", t)
     bias = (sensor_id - 1) * 0.5
     noise = random.gauss(0, 3.5)
-    return round(clamp(get_humidity_baseline(profile, t) + noise + bias, 25, 80), 1)
+    return round(clamp(baseline + noise + bias, 25, 80), 1)
 
 # ==========================
-# WINDOW (independent per sensor)
+# WINDOW 
 # ==========================
 
-def simulate_window(sensor_id: int) -> int:
-    bias = (sensor_id - 1) * 0.1
-    noise = random.gauss(0, 0.5)
-    value = noise + bias
-    return 1 if value > 0.6 else 0
-
-
+def simulate_window(profile: str, sensor_id: int) -> int:
+    base_prob = get_probability(profile, "window")
+    
+    # Add small bias per sensor and noise
+    bias = (sensor_id - 1) * 0.05
+    noise = random.gauss(0, 0.1)
+    
+    # Calculate final probability (clamped between 0 and 1)
+    final_prob = clamp(base_prob + bias + noise, 0.0, 1.0)
+    
+    return 1 if random.random() < final_prob else 0
 
 # ==========================
-# SMOKE (independent per sensor)
+# SMOKE 
 # ==========================
 
 def simulate_smoke(profile: str, sensor_id: int) -> int:
-    if profile == "kitchen":
-        return 1
-    bias = (sensor_id - 1) * 0.05
-    base = 0.2
-    noise = random.gauss(0, 0.7)
-    value = base + noise + bias
-    return 1 if value > 0.8 else 0
-
+    base_prob = get_probability(profile, "smoke")
+    
+    
+    # Add small bias per sensor and noise
+    bias = (sensor_id - 1) * 0.02
+    noise = random.gauss(0, 0.05)
+    
+    # Calculate final probability (clamped between 0 and 1)
+    final_prob = clamp(base_prob + bias + noise, 0.0, 1.0)
+    
+    return 1 if random.random() < final_prob else 0
 
 # ==========================
 # MQTT
@@ -117,7 +150,6 @@ def main():
     client = mqtt.Client(
         client_id=MQTT_CLIENT_ID,
         protocol=mqtt.MQTTv311,
-        callback_api_version=1
     )
 
     while True:
@@ -131,6 +163,8 @@ def main():
 
     client.loop_start()
     print("Simulator started.")
+    print(f"Loaded {len(PROFILES)} profiles: {list(PROFILES.keys())}")
+    print(f"Loaded {len(ROOMS)} rooms")
 
     while True:
         t = now()
@@ -141,20 +175,21 @@ def main():
             sensors = room["sensors"]
 
             for i in range(1, sensors.get("temperature", 0) + 1):
-                publish(client, f"home/{room_id}/temperature/{i}",
-                        simulate_temperature(profile, i, t))
+                value = simulate_temperature(profile, i, t)
+                publish(client, f"home/{room_id}/temperature/{i}", value)
 
             for i in range(1, sensors.get("humidity", 0) + 1):
-                publish(client, f"home/{room_id}/humidity/{i}",
-                        simulate_humidity(profile, i, t))
+                value = simulate_humidity(profile, i, t)
+                publish(client, f"home/{room_id}/humidity/{i}", value)
 
             for i in range(1, sensors.get("window", 0) + 1):
-                publish(client, f"home/{room_id}/window/{i}",
-                        simulate_window(i))
+                value = simulate_window(profile, i)
+                publish(client, f"home/{room_id}/window/{i}", value)
 
             for i in range(1, sensors.get("smoke", 0) + 1):
-                publish(client, f"home/{room_id}/smoke/{i}",
-                        simulate_smoke(profile, i))
+                value = simulate_smoke(profile, i)
+                publish(client, f"home/{room_id}/smoke/{i}", value)
+
         time.sleep(SIMULATION_INTERVAL_SECONDS)
 
 if __name__ == "__main__":
