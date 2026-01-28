@@ -167,7 +167,7 @@
         "z": "f7ee29e1334162d9",
         "influxdb": "ce479483708d6c92",
         "name": "influxdb Read",
-        "query": "",
+        "query": "\n",
         "rawOutput": false,
         "precision": "",
         "retentionPolicy": "",
