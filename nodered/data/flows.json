@@ -18,7 +18,7 @@
         "usetls": false,
         "tls": "",
         "influxdbVersion": "2.0",
-        "url": "http://172.30.0.101:8086",
+        "url": "${INFLUXDB_URL}",
         "timeout": 10,
         "rejectUnauthorized": true
     },
@@ -85,14 +85,14 @@
                 "p": "payload"
             }
         ],
-        "repeat": "10",
+        "repeat": "",
         "crontab": "",
         "once": false,
         "onceDelay": 0.1,
         "topic": "",
         "payload": "",
         "payloadType": "date",
-        "x": 140,
+        "x": 130,
         "y": 120,
         "wires": [
             [
@@ -171,7 +171,7 @@
         "rawOutput": false,
         "precision": "",
         "retentionPolicy": "",
-        "org": "univaq",
+        "org": "${INFLUXDB_ORG}",
         "x": 620,
         "y": 360,
         "wires": [

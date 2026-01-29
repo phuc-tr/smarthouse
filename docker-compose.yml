@@ -9,6 +9,10 @@ services:
     environment:
       - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
       - TELEGRAM_CHAT_ID=${TELEGRAM_CHAT_ID}
+      - INFLUXDB_URL=${INFLUXDB_URL}
+      - INFLUXDB_ORG=${INFLUXDB_ORG}
+      - INFLUXDB_BUCKET=${INFLUXDB_BUCKET}
+      - INFLUXDB_TOKEN=${INFLUXDB_TOKEN}
     networks:
       iot-network:
         ipv4_address: 172.30.0.99
@@ -39,9 +43,9 @@ services:
       - DOCKER_INFLUXDB_INIT_MODE=setup
       - DOCKER_INFLUXDB_INIT_USERNAME=admin
       - DOCKER_INFLUXDB_INIT_PASSWORD=admin1234
-      - DOCKER_INFLUXDB_INIT_ORG=univaq
-      - DOCKER_INFLUXDB_INIT_BUCKET=smarthouse
-      - DOCKER_INFLUXDB_INIT_ADMIN_TOKEN=Ga8nVsXP4FAe5_M1a5j7uCa4zO_u_M9oUsO8wUSWh_wPbR3clc9ZTv420Li9adOVCPl1tGvn6hLHfI5gP7Lm5A==
+      - DOCKER_INFLUXDB_INIT_ORG=${INFLUXDB_ORG}
+      - DOCKER_INFLUXDB_INIT_BUCKET=${INFLUXDB_BUCKET}
+      - DOCKER_INFLUXDB_INIT_ADMIN_TOKEN=${INFLUXDB_TOKEN}
     restart: always
     networks:
       iot-network:
@@ -53,7 +57,7 @@ services:
     volumes:
       - ./telegraf/telegraf.conf:/etc/telegraf/telegraf.conf:ro
     environment:
-      - INFLUX_TOKEN=jWKNXJQ8bqV0RgWls9p-kjNwXvl6tmRcLEa4IcVBJVYPKViRFGQAqyc-uT5_A7pmt8PXWpGyHppV6EMOuG1E9g==
+      - INFLUX_TOKEN=${INFLUX_TELEGRAF_TOKEN}
     restart: always
     depends_on:
       - influxdb
