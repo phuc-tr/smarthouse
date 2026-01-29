@@ -171,7 +171,7 @@
         "rawOutput": false,
         "precision": "",
         "retentionPolicy": "",
-        "org": "${INFLUXDB_ORG}z",
+        "org": "${INFLUXDB_ORG}",
         "x": 620,
         "y": 360,
         "wires": [
