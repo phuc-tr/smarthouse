@@ -87,6 +87,30 @@ If successful, notifications will be sent to Telegram as shown in the screenshot
   <img src="telegram.png" alt="telegram" width="70%"/>
 </p>
 
+### Node-RED Configuration
+
+Node-RED behavior is configured in `nodered/data/config.json`, which contains an array of configuration objects.
+
+#### Configuration Details
+
+* **sensor**: `[string]`
+    * The unique identifier or name of the sensor, e.g. temperature, smoke
+* **active**: `[true | false]`
+    * Determines if the configuration is enabled. Use **true** to process data for this sensor, or **false** to disable all logic and notifications.
+* **stateful**: `[true | false]`
+    * Controls the notification frequency:
+        * **true**: Sends a message when the value **crosses** the threshold (transitioning from under to above, and vice versa).
+        * **false**: Only sends a message when the value **crosses** the threshold from under to above. Use this for critical binary events where a "back to normal" message is unnecessary or redundant. e.g. smoke detector
+* **threshold**: `[number]`
+    * The numerical value used as the trigger point for logic transitions.
+* **msg_above**: `[string]`
+    * The message text to be dispatched when the sensor value is greater than the defined threshold.
+* **msg_under**: `[string]`
+    * The message text to be dispatched when the sensor value falls below the threshold. Only used if **stateful** is set to **true**.
+* **unit**: `[string]`
+    * The label for the unit of measurement (e.g., "°C", "RH"). This is used for formatting the output message. Only used if **stateful** is set to **true**.
+
+
 ## Developed by
 
 - [Mete Harun Akcay](https://github.com/meteharun)

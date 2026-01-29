@@ -23,7 +23,8 @@
         "msg_above": "💦 High humidity alarm",
         "msg_under": "✅ Humidity back to normal",
         "unit": "RH"   
-    },    {
+    },    
+    {
         "sensor": "window",
         "active": false,
         "stateful": false,
